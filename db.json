@@ -1,0 +1,34 @@
+{
+  "users": [
+    {
+      "uid": "52B8545D",
+      "pin": "1111",
+      "balance": 50,
+      "lastUsed": null
+    },
+    {
+      "uid": "02022507",
+      "pin": "2222",
+      "balance": 20,
+      "lastUsed": null
+    },
+    {
+      "uid": "02022817",
+      "pin": "2222",
+      "balance": 40,
+      "lastUsed": null
+    },
+    {
+      "uid": "02422507",
+      "pin": "2222",
+      "balance": 25,
+      "lastUsed": null
+    },
+    {
+      "uid": "02722507",
+      "pin": "2222",
+      "balance": 21,
+      "lastUsed": null
+    }
+  ]
+}
