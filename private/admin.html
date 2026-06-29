@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <title>ადმინისტრატორის პანელი</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background-color: #eee; }
+        .admin-box { background: white; padding: 20px; border-radius: 12px; max-width: 1000px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .flex-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        button, a.btn { padding: 8px 15px; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; }
+        .btn-green { background-color: #27ae60; } .btn-red { background-color: #e74c3c; } .btn-blue { background-color: #3498db; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #34495e; color: white; }
+        .add-user-form { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .add-user-form input, .add-user-form select { padding: 8px; flex: 1; min-width: 120px; }
+    </style>
+</head>
+<body>
+    <div class="admin-box">
+        <div class="flex-header">
+            <h2>მართვის პანელი</h2>
+            <div>
+                <button class="btn-green" onclick="loadUsers()">განახლება</button>
+                <a href="/index.html" class="btn-red btn">გასვლა</a>
+            </div>
+        </div>
+
+        <div class="add-user-form">
+            <input type="text" id="addUid" placeholder="ბარათის ID">
+            <input type="text" id="addUsername" placeholder="მომხმარებელი">
+            <input type="text" id="addWebPass" placeholder="ვებ-პაროლი">
+            <input type="text" id="addCardPin" placeholder="ბარათის PIN">
+            <input type="number" id="addBalance" placeholder="ბალანსი (₾)">
+            <select id="addRole">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button class="btn-blue" onclick="addUser()">დამატება</button>
+        </div>
+
+        <table id="userTable">
+            <thead>
+                <tr>
+                    <th>როლი</th>
+                    <th>მომხმარებელი</th>
+                    <th>ვებ-პაროლი</th>
+                    <th>ბარათის ID</th>
+                    <th>ბარათის PIN</th>
+                    <th>ბალანსი</th>
+                    <th>ბოლო გამოყენება</th>
+                </tr>
+            </thead>
+            <tbody id="userBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        async function loadUsers() {
+            const body = document.getElementById('userBody');
+            body.innerHTML = '<tr><td colspan="7">იტვირთება...</td></tr>';
+            const res = await fetch('/api/admin/users');
+            const users = await res.json();
+            body.innerHTML = '';
+            Object.keys(users).forEach(uid => {
+                const u = users[uid];
+                body.innerHTML += `<tr>
+                    <td>${u.role === 'admin' ? '<b>Admin</b>' : 'User'}</td>
+                    <td>${u.username}</td><td>${u.webPassword}</td><td>${uid}</td>
+                    <td>${u.cardPin || '-'}</td><td>${u.balance || 0} ₾</td>
+                    <td>${u.lastUsed ? new Date(u.lastUsed).toLocaleString('ka-GE') : '-'}</td>
+                </tr>`;
+            });
+        }
+
+        async function addUser() {
+            const data = {
+                uid: document.getElementById('addUid').value,
+                username: document.getElementById('addUsername').value,
+                webPassword: document.getElementById('addWebPass').value,
+                cardPin: document.getElementById('addCardPin').value,
+                balance: document.getElementById('addBalance').value,
+                role: document.getElementById('addRole').value
+            };
+            if(!data.uid || !data.username) return alert("შეავსეთ ID და მომხმარებელი!");
+            
+            await fetch('/api/admin/add-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            alert("დამატებულია!");
+            loadUsers();
+        }
+
+        window.onload = loadUsers;
+    </script>
+</body>
+</html>

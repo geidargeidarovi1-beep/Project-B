@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>სისტემაში შესვლა</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #e9ecef; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 320px; text-align: center; }
+        h2 { color: #2c3e50; margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 10px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .btn-success { background-color: #28a745; }
+        #message, #pinMessage { margin-top: 15px; padding: 10px; border-radius: 6px; display: none; font-weight: bold; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .success-msg { background-color: #d4edda; color: #155724; }
+        .user-info { background-color: #d1ecf1; text-align: left; padding: 15px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <div class="login-box" id="loginForm">
+        <h2>სისტემაში შესვლა</h2>
+        <input type="text" id="username" placeholder="მომხმარებლის სახელი">
+        <input type="password" id="webPassword" placeholder="ვებ-პაროლი">
+        <button onclick="login()">შესვლა</button>
+        <div id="message"></div>
+    </div>
+
+    <div class="login-box" id="userDashboard" style="display: none;">
+        <h2>ჩემი პროფილი</h2>
+        <div class="user-info" id="userInfo"></div>
+        <hr>
+        <p style="text-align: left;"><strong>ბარათის PIN-ის შეცვლა:</strong></p>
+        <input type="text" id="newCardPin" placeholder="ახალი PIN">
+        <button onclick="changePin()" class="btn-success">შეცვლა</button>
+        <div id="pinMessage"></div>
+        <button onclick="location.reload()" style="background-color: #6c757d; margin-top: 20px;">გასვლა</button>
+    </div>
+
+    <script>
+        let currentUid = "";
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const webPassword = document.getElementById('webPassword').value;
+            const msgDiv = document.getElementById('message');
+
+            if(!username || !webPassword) { msgDiv.style.display = 'block'; msgDiv.className = 'error'; msgDiv.innerText = 'შეავსეთ ყველა ველი!'; return; }
+
+            try {
+                const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, webPassword }) });
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.role === "admin") {
+                        window.location.href = data.redirect;
+                    } else {
+                        currentUid = data.uid;
+                        document.getElementById('loginForm').style.display = 'none';
+                        document.getElementById('userDashboard').style.display = 'block';
+                        let dateText = data.lastUsed ? new Date(data.lastUsed).toLocaleString('ka-GE') : 'არ გამოუყენებია';
+                        document.getElementById('userInfo').innerHTML = `<p><strong>ID:</strong> ${currentUid}</p><p><strong>ბალანსი:</strong> ${data.balance} ₾</p><p><strong>ბოლო გამოყენება:</strong> <br>${dateText}</p>`;
+                    }
+                } else {
+                    msgDiv.style.display = 'block'; msgDiv.className = 'error'; msgDiv.innerText = data.message;
+                }
+            } catch (err) { msgDiv.style.display = 'block'; msgDiv.className = 'error'; msgDiv.innerText = "შეცდომა!"; }
+        }
+
+        async function changePin() {
+            const newPin = document.getElementById('newCardPin').value;
+            if(!newPin) return;
+            const res = await fetch('/api/change-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: currentUid, newPin }) });
+            const data = await res.json();
+            const pinMsg = document.getElementById('pinMessage');
+            pinMsg.style.display = 'block'; pinMsg.className = data.success ? 'success-msg' : 'error'; pinMsg.innerText = data.message;
+        }
+    </script>
+</body>
+</html>
